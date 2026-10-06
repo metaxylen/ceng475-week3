@@ -332,6 +332,14 @@ async function boot() {
   css(ov, { position: "fixed", inset: 0, zIndex: 100, background: "#000", color: "#33ff66", padding: "6vh 6vw",
     font: "18px/1.7 monospace", cursor: "pointer", overflow: "hidden" });
   document.body.append(ov);
+  // istediğin an tıkla → direkt fırlat (yazıyı beklemeye gerek yok)
+  const clicked = new Promise((r) => (ov.onclick = r));
+  const hint = document.createElement("div");
+  hint.textContent = "(ekrana tıkla → başlat)";
+  css(hint, { position: "absolute", right: "4vw", bottom: "4vh", color: "#33ff6688", fontSize: "14px", animation: "blink 1.2s steps(1) infinite" });
+  ov.append(hint);
+  let skip = false;
+  clicked.then(() => (skip = true));
   const lines = [
     "> booting CENG475.exe ...",
     "> import * as util from './util.js'",
@@ -343,17 +351,18 @@ async function boot() {
     "> injecting vibes .................. 100%",
   ];
   for (const line of lines) {
+    if (skip) break;
     const p = document.createElement("div");
     ov.append(p);
-    for (let c = 1; c <= line.length; c++) { p.textContent = line.slice(0, c); await sleep(12); }
+    for (let c = 1; c <= line.length && !skip; c++) { p.textContent = line.slice(0, c); await sleep(12); }
     await sleep(120);
   }
   const btn = document.createElement("div");
   btn.textContent = "[ CLICK TO LAUNCH 🚀 ]";
   css(btn, { marginTop: "5vh", display: "inline-block", padding: "16px 30px", border: "2px solid #fce563", color: "#fce563",
     fontSize: "28px", fontWeight: "bold", borderRadius: "10px", animation: "pulse 1.2s infinite" });
-  ov.append(btn);
-  await new Promise((r) => (ov.onclick = r));
+  if (!skip) ov.append(btn);
+  await clicked;
 
   actx = new (window.AudioContext || window.webkitAudioContext)();
   launched = true;
